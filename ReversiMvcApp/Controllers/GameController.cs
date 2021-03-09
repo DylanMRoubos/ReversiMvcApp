@@ -1,51 +1,80 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using ReversiMvcApp.DAL;
+using ReversiMvcApp.Data;
 using ReversiMvcApp.Models;
 
 namespace ReversiMvcApp.Controllers
 {
+    [Authorize]
     public class GameController : Controller
     {
-        private readonly ReversiDbContext _context;
-
-        public GameController(ReversiDbContext context)
-        {
-            _context = context;
+        private ReversiApiContext _context;
+        public ReversiApiContext Context { get
+            {
+                if(_context == null)
+                {
+                    ClaimsPrincipal currentUser = this.User;
+                    _context = new ReversiApiContext(currentUser.FindFirst(ClaimTypes.NameIdentifier).Value);
+                }
+                return _context;
+            }
         }
 
         // GET: Game
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
-            return View(await _context.Game.ToListAsync());
-        }
+            if (Context.PlayerHasActiveGame())
+            {
+                return RedirectToAction("Details", new { id = Context.GetPlayerCurrentGame() });
+            }
 
+            HttpResponseMessage response = Context.GetRequest("/api/spel");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responeList = JsonConvert.DeserializeObject<List<Game>>(response.Content.ReadAsStringAsync().Result);
+                return View(responeList);
+            }
+
+            return View();
+
+        }
         // GET: Game/Details/5
-        public async Task<IActionResult> Details(int? id)
+        public IActionResult Details(string id)
         {
             if (id == null)
             {
                 return NotFound();
             }
+            HttpResponseMessage response = Context.GetRequest("/api/spel/" + id);
 
-            var game = await _context.Game
-                .FirstOrDefaultAsync(m => m.ID == id);
-            if (game == null)
+            if (response.IsSuccessStatusCode)
             {
-                return NotFound();
+                var responseGame = JsonConvert.DeserializeObject<Game>(response.Content.ReadAsStringAsync().Result);
+                return View(responseGame);
             }
 
-            return View(game);
+            return View();
         }
 
         // GET: Game/Create
         public IActionResult Create()
         {
+            if (Context.PlayerHasActiveGame())
+            {
+                return RedirectToAction("Details", new { id = Context.GetPlayerCurrentGame() });
+            }
             return View();
         }
 
@@ -54,100 +83,20 @@ namespace ReversiMvcApp.Controllers
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ID,Token,PlayerToken2,Description,Winner,Finished")] Game game)
+        public IActionResult Create([Bind("Description")] Game game)
         {
-            if (ModelState.IsValid)
+            //GET current user ID
+            ClaimsPrincipal currentUser = this.User;
+            game.PlayerToken1 = currentUser.FindFirst(ClaimTypes.NameIdentifier).Value;
+
+            var response = Context.PostRequest("/api/spel", game);
+            if(response.IsSuccessStatusCode)
             {
-                _context.Add(game);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("Details", new { id = Context.GetPlayerCurrentGame() });
             }
-            return View(game);
-        }
+            return View();
 
-        // GET: Game/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var game = await _context.Game.FindAsync(id);
-            if (game == null)
-            {
-                return NotFound();
-            }
-            return View(game);
-        }
-
-        // POST: Game/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for 
-        // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ID,Token,PlayerToken2,Description,Winner,Finished")] Game game)
-        {
-            if (id != game.ID)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(game);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!GameExists(game.ID))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(game);
-        }
-
-        // GET: Game/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var game = await _context.Game
-                .FirstOrDefaultAsync(m => m.ID == id);
-            if (game == null)
-            {
-                return NotFound();
-            }
-
-            return View(game);
-        }
-
-        // POST: Game/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var game = await _context.Game.FindAsync(id);
-            _context.Game.Remove(game);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool GameExists(int id)
-        {
-            return _context.Game.Any(e => e.ID == id);
+            
         }
     }
 }

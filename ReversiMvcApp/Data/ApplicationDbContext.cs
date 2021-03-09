@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using ReversiMvcApp.Models;
 
 namespace ReversiMvcApp.Data
 {
@@ -12,5 +13,6 @@ namespace ReversiMvcApp.Data
             : base(options)
         {
         }
+        public DbSet<ReversiMvcApp.Models.Game> Game { get; set; }
     }
 }

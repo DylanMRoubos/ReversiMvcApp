@@ -2,9 +2,12 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using ReversiMvcApp.DAL;
 using ReversiMvcApp.Models;
 
 namespace ReversiMvcApp.Controllers
@@ -12,17 +15,34 @@ namespace ReversiMvcApp.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly ReversiDbContext _reversiDb;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, ReversiDbContext reversiDb)
         {
             _logger = logger;
+            _reversiDb = reversiDb;
         }
 
         public IActionResult Index()
-        {
+        {            
+            try
+            {
+                //Check if player already has record
+                ClaimsPrincipal currentUser = this.User;
+                var currentUserID = currentUser.FindFirst(ClaimTypes.NameIdentifier).Value;
+                if (!_reversiDb.Spelers.Any(s => s.Guid == currentUserID))
+                {
+                    _reversiDb.Spelers.Add(new Speler() { Guid = currentUserID });
+                    _reversiDb.SaveChanges();
+                }                
+            }
+            catch(Exception e) { }
+
+            //return RedirectToAction("Game", "GameController", null, null);
+
             return View();
         }
-
+        [Authorize]
         public IActionResult Privacy()
         {
             return View();
