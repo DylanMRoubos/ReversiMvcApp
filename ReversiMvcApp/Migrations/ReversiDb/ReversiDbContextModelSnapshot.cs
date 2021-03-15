@@ -18,6 +18,39 @@ namespace ReversiMvcApp.Migrations.ReversiDb
                 .HasAnnotation("ProductVersion", "5.0.3")
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
+            modelBuilder.Entity("ReversiMvcApp.Models.Game", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("CurrentPlayer")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Finished")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PlayerToken1")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PlayerToken2")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Token")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Winner")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ID");
+
+                    b.ToTable("Game");
+                });
+
             modelBuilder.Entity("ReversiMvcApp.Models.Speler", b =>
                 {
                     b.Property<string>("Guid")
@@ -33,6 +66,9 @@ namespace ReversiMvcApp.Migrations.ReversiDb
                         .HasColumnType("int");
 
                     b.Property<string>("Naam")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SpelerRol")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Guid");

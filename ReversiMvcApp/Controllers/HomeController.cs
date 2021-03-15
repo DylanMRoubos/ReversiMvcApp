@@ -23,23 +23,23 @@ namespace ReversiMvcApp.Controllers
             _reversiDb = reversiDb;
         }
 
+        //TODO: Add a null check instead of try catch
         public IActionResult Index()
-        {            
-            try
-            {
-                //Check if player already has record
-                ClaimsPrincipal currentUser = this.User;
-                var currentUserID = currentUser.FindFirst(ClaimTypes.NameIdentifier).Value;
+        {   
+            //Check if player already has record
+            ClaimsPrincipal currentUser = this.User;
+
+            var claimcurrentUserID = currentUser.FindFirst(ClaimTypes.NameIdentifier);
+            var currentUserID = (claimcurrentUserID == null ? string.Empty : claimcurrentUserID.Value);
+
+            if(currentUserID != "") {
                 if (!_reversiDb.Spelers.Any(s => s.Guid == currentUserID))
                 {
                     _reversiDb.Spelers.Add(new Speler() { Guid = currentUserID });
                     _reversiDb.SaveChanges();
-                }                
+                }
             }
-            catch(Exception e) { }
-
-            //return RedirectToAction("Game", "GameController", null, null);
-
+                                          
             return View();
         }
         [Authorize]

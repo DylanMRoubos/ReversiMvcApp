@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using ReversiMvcApp.DAL;
 using ReversiMvcApp.Data;
@@ -19,7 +20,10 @@ namespace ReversiMvcApp.Controllers
     [Authorize]
     public class GameController : Controller
     {
+        private readonly ReversiDbContext _reversiDb;
         private ReversiApiContext _context;
+        private readonly ILogger _logger;
+
         public ReversiApiContext Context { get
             {
                 if(_context == null)
@@ -30,6 +34,11 @@ namespace ReversiMvcApp.Controllers
                 return _context;
             }
         }
+        public GameController(ReversiDbContext reversiDb, ILogger<GameController> logger)
+        {
+            _logger = logger;
+            _reversiDb = reversiDb;
+        }
 
         // GET: Game
         public IActionResult Index()
@@ -39,6 +48,7 @@ namespace ReversiMvcApp.Controllers
                 return RedirectToAction("Details", new { id = Context.GetPlayerCurrentGame() });
             }
 
+            _logger.LogInformation($"Game - Index page visited at { DateTime.UtcNow.ToLongTimeString()}");
             HttpResponseMessage response = Context.GetRequest("/api/spel");
 
             if (response.IsSuccessStatusCode)
@@ -97,6 +107,35 @@ namespace ReversiMvcApp.Controllers
             return View();
 
             
+        }
+
+        //Game/Delete/{id}
+        public IActionResult Delete(string token, string winnerToken, string loserToken, bool draw)
+        {
+            var response = Context.DeleteRequest("/api/spel/" + token);
+
+            if(response.IsSuccessStatusCode)
+            {
+                if (draw)
+                {
+                    //Set a draw on both accounts
+                    var player1 = _reversiDb.Spelers.First(s => s.Guid == loserToken);
+                    var player2 = _reversiDb.Spelers.First(s => s.Guid == winnerToken);
+                    player1.AantalGelijk++;
+                    player2.AantalGelijk++;
+                    _reversiDb.SaveChanges();
+                    return RedirectToAction("Index");
+                }
+
+                var loser = _reversiDb.Spelers.First(s => s.Guid == loserToken);
+                loser.AantalVerloren++;
+                var winner = _reversiDb.Spelers.First(s => s.Guid == winnerToken);
+                winner.AantalGewonnen++;
+                _reversiDb.SaveChanges();
+
+            }
+
+            return RedirectToAction("Index");
         }
     }
 }

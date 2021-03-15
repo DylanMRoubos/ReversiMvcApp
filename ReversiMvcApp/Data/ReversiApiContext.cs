@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using Newtonsoft.Json;
+using ReversiMvcApp.DAL;
 using ReversiMvcApp.Models;
 
 namespace ReversiMvcApp.Data
@@ -11,7 +12,7 @@ namespace ReversiMvcApp.Data
     {
         private string _requestUri = "https://localhost:5001/";
         private HttpClient _client;
-        private string _playerToken;
+        private string _playerToken;        
 
         public ReversiApiContext(string playerToken)
         {
@@ -29,6 +30,11 @@ namespace ReversiMvcApp.Data
         public HttpResponseMessage PostRequest(string url, Object model)
         {
             return _client.PostAsJsonAsync(url, model).Result;
+        }
+
+        public HttpResponseMessage DeleteRequest(string url)
+        {
+            return _client.DeleteAsync(url).Result;
         }
 
         public bool PlayerHasActiveGame()
