@@ -10,6 +10,6 @@ namespace ReversiMvcApp.DAL
 
         public DbSet<Speler> Spelers { get; set; }
 
-        public DbSet<ReversiMvcApp.Models.Game> Game { get; set; }
+        public DbSet<Game> Game { get; set; }
     }
 }

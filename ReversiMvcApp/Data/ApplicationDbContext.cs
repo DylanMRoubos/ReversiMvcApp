@@ -13,6 +13,5 @@ namespace ReversiMvcApp.Data
             : base(options)
         {
         }
-        public DbSet<ReversiMvcApp.Models.Game> Game { get; set; }
     }
 }

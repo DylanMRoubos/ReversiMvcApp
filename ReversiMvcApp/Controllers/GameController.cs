@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -13,16 +14,18 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using ReversiMvcApp.DAL;
 using ReversiMvcApp.Data;
+using ReversiMvcApp.Helpers;
 using ReversiMvcApp.Models;
 
 namespace ReversiMvcApp.Controllers
 {
-    [Authorize]
+   
     public class GameController : Controller
     {
         private readonly ReversiDbContext _reversiDb;
         private ReversiApiContext _context;
         private readonly ILogger _logger;
+
 
         public ReversiApiContext Context { get
             {
@@ -41,12 +44,15 @@ namespace ReversiMvcApp.Controllers
         }
 
         // GET: Game
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            if (Context.PlayerHasActiveGame())
-            {
-                return RedirectToAction("Details", new { id = Context.GetPlayerCurrentGame() });
-            }
+            //if (Context.PlayerHasActiveGame())
+            //{
+            //    return RedirectToAction("Details", new { id = Context.GetPlayerCurrentGame() });
+            //}
+            
+            //var currentIdentityUser = await _usermanager.GetUserAsync(User);
+            //await _usermanager.AddToRoleAsync(currentIdentityUser, "SuperAdmin");
 
             _logger.LogInformation($"Game - Index page visited at { DateTime.UtcNow.ToLongTimeString()}");
             HttpResponseMessage response = Context.GetRequest("/api/spel");
@@ -102,7 +108,18 @@ namespace ReversiMvcApp.Controllers
             var response = Context.PostRequest("/api/spel", game);
             if(response.IsSuccessStatusCode)
             {
-                return RedirectToAction("Details", new { id = Context.GetPlayerCurrentGame() });
+                //Get game token basewd on user ID with the following ID: https://localhost:5001/api/Spel/Speler/a865c1e4-1c53-4239-aa37-ae75bb395711
+
+                HttpResponseMessage gameRepsonse = Context.GetRequest("/api/spel/speler/" + game.PlayerToken1);
+
+                if (gameRepsonse.IsSuccessStatusCode)
+                {
+                    var apiGame = JsonConvert.DeserializeObject<Game>(gameRepsonse.Content.ReadAsStringAsync().Result);
+
+                    _reversiDb.Game.AddAsync(new Game() { Token = apiGame.Token, Description = apiGame.Description, PlayerToken1 = apiGame.PlayerToken1 });
+                    _reversiDb.SaveChanges();
+                    return RedirectToAction("Details", new { id = Context.GetPlayerCurrentGame() });
+                }
             }
             return View();
 

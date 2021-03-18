@@ -2,15 +2,17 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ReversiMvcApp.DAL;
 
 namespace ReversiMvcApp.Migrations.ReversiDb
 {
     [DbContext(typeof(ReversiDbContext))]
-    partial class ReversiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20210316132055_UpdateUserWithRoleFix")]
+    partial class UpdateUserWithRoleFix
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

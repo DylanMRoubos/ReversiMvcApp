@@ -32,5 +32,7 @@
   <ItemGroup>
     <Folder Include="Helpers\" />
     <Folder Include="Hubs\" />
+    <Folder Include="Views\Account\" />
+    <Folder Include="Areas\Identity\Data\" />
   </ItemGroup>
 </Project>
