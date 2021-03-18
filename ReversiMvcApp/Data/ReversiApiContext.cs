@@ -16,7 +16,10 @@ namespace ReversiMvcApp.Data
 
         public ReversiApiContext(string playerToken)
         {
-            _client = new HttpClient();
+            HttpClientHandler clientHandler = new HttpClientHandler();
+            clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
+
+            _client = new HttpClient(clientHandler);
             _client.BaseAddress = new Uri(_requestUri);
             _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             _playerToken = playerToken;
