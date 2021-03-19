@@ -1,23 +1,24 @@
-const Game = (function (url) {
+const Game = (function (token) {
 
-    let _url = url;
+    let _token = token;
 
     const _getCurrentGameState = function () {
         // Game.Model.getGameState()
+        console.log("refresh");
+        Game.Model.updateGame(_token);
     }
 
-    const init = function (afterInit) {        
-        setInterval(
-            // _getCurrentGameState(),
-            2000
-        );
+    const init = function () {
+        window.setInterval(function(){      
+            _getCurrentGameState()            
+        }, 2000);
         afterInit();
     };
     // Waarde/object geretourneerd aan de outer scope
     return {
         init: init,
     };
-})('https://meme-api.herokuapp.com/gimme');
+})('d2dd4b51-c863-4dd7-9daa-060ebc38a569');
 $(function() {
     let x = new FeedbackWidget("feedback-danger")
     console.log( "ready!" );
@@ -69,16 +70,14 @@ class FeedbackWidget{
         $("#feedback-widget").addClass("fade-out")
     } 
 }
-Game.Api = (function () {
+Game.Api = (() => {
 
     console.log("joejoe vanuit api");
-
-
 
     const showMeme = () => {
         Game.Data.apicall("https://meme-api.herokuapp.com/gimme")
         .then(function (data) {
-            $("#test").append(
+            $("#test").html(
                 Game.Template.parseTemplate("meme", {src: data["url"]})
             )
         })
@@ -86,14 +85,9 @@ Game.Api = (function () {
 
     return {
         showMeme: showMeme,
-        
     }
 })();
 Game.Data = (function () {
-
-    console.log('hallo, vanuit module data')
-
-    let board = { board: [[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 2, 0, 0, 0], [0, 0, 0, 2, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]] }
 
     let apicall = (_url) => {
         return new Promise(function (resolve, reject) {
@@ -118,47 +112,39 @@ Game.Data = (function () {
         )
     }
 
-    // let printboard = function () {
-    //     for (var i = 0; i < gameBoard.length; i++) {
-    //         var colour = gameBoard[i].split(", ");
-    //         console.log(colour);
-
-    //         for (var j = 0; j < colour.length; j++) {
-    //             console.log(colour[j]);
-    //             $("#board").append(
-    //                 // Game.Template.
-    //                 // Handlebars.partials.cell({id: i + j})
-    //                 "<div class=\"cell\" onclick=\"Game.Data.showFiche(this.id)\" id=\"cell" + i + j + "\"></div>"
-    //             )
-    //             if (colour[j] == "Wit") {
-    //                 $("#cell" + i + j + "").append(
-    //                     "<div class=\"disc disc-1\"></div>"
-    //                 )
-    //             }
-    //             else if (colour[j] == "Zwart") {
-    //                 $("#cell" + i + j + "").append(
-    //                     "<div class=\"disc disc-2\"></div>"
-    //                 )
-    //             }
-
-    //         }
-    //     }
-    // }
-
-    let printboard = () => {
-        $("#board").html(Game.Template.parseTemplate("bord", board))
+    let printboard = (board) => {
+        let data = {
+            board: JSON.parse(board)
+        }
+        $("#boardarea").html(Game.Template.parseTemplate("board", data))
     }
+
+    const printDetails = (game) => {
+        $("#descriptions").html(game.description);
+        $("#player1token").html(game.playerToken1);
+        $("#player2token").html(game.playerToken2);
+
+        if(game.currentPlayer == 2) {
+            $("#player1token").css('font-weight', 'bold');
+            $("#player2token").css('font-weight', 'normal');
+        } else {
+            $("#player2token").css('font-weight', 'bold');
+            $("#player1token").css('font-weight', 'normal');
+        }
+    }    
 
 
     return {
         printboard: printboard,
+        printDetails, printDetails,
         showFiche: placeDisc,
         apicall: apicall,
     };
 })();
-Game.Model = (function() {
-    console.log('hallo, vanuit module Model')   
-    
+Game.Model = (function () {
+
+    let game;
+
     // const _getGameState = function(token){
     //     //aanvraag via Game.Data
     //     let state = Game.Data.get("/api/Spel/Beurt/" + token);
@@ -172,17 +158,41 @@ Game.Model = (function() {
     //             return "Zwart is aan zet"             
     //     }
     // };
-        
+
+    const updateGame = (token) => {
+        _getGameData(token).then(function (data) {
+            game = data;
+            Game.Data.printboard(game.board);
+            Game.Data.printDetails(game);
+        }).catch(function (error) {
+            Game.Data.printboard(game.board);
+        })
+    }
+
+    const _getGameData = (token) => {
+        return new Promise(function (resolve, reject) {
+            Game.Data.apicall("https://localhost:5001/api/spel/" + token).then(function (data) {
+                if (data != null) {
+                    resolve(data);
+                }
+                reject();
+            })
+        })
+    }
+
     // Private function init
-    const privateInit = function(){
+    const privateInit = function () {
         // console.log(configMap.apiUrl);
     };
-    
+
     // Waarde/object geretourneerd aan de outer scope
     return {
-    init: privateInit,
-    // getGameState: _getGameState
-    };    
+        init: privateInit,
+        updateGame: updateGame,
+        game: game,
+
+        // getGameState: _getGameState
+    };
 })();
 Game.Reversi = (function() {
     console.log('hallo, vanuit module Reversi')
@@ -201,6 +211,19 @@ Game.Reversi = (function() {
     return {
     // init: privateInit
     } ;   
+})();
+Game.Stats = (() => {
+
+    var _configMap;
+
+    const init = (configMap) => {
+        _configMap = configMap
+    }
+
+    return {
+        init: init
+    }
+
 })();
 Game.Template = (function () {
 
