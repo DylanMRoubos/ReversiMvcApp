@@ -1,42 +1,58 @@
-﻿@model ReversiMvcApp.Models.Game
+﻿@model ReversiMvcApp.Models.GameDetails
 
 @{
     ViewData["Title"] = "Details";
 }
 
-<h1>Details</h1>
 
-<div>
-    <h4>Spel</h4>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Token)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Token)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.PlayerToken1)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.PlayerToken1)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.PlayerToken2)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.PlayerToken2)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
+<section id="feedback-widget" class="custom-alert fade-out" role="alert">
+    <i class="full-width align-right far fa-window-close fa-2x gray"></i>
+    <div class="full-width">
+        <i class="inline-display far fa-check fa-3x gray feedback-icon"></i>
+        <strong>
+            <p class="inline-display alert-text gray">Mike wil deelnemen aan jouw spel. Geef akkoord</p>
+        </strong>
+    </div>
+    <div class="full-width align-right button-row">
+        <button class="align-right button cbutton-primary accept-button FeedbackButton" type="button">Akkoord</button>
+        <button class="align-right button cbutton-danger FeedbackButton" type="button">Weigeren</button>
+    </div>
+</section>
+<div class="container">
+    <div class="row">
+        <div class="col-12 col-lg-6 col-xxl-6">
+            <h1>Reversi</h1><br>
+            <h3 id="descriptions">Description: </h3><br>
+            <h2>Player turn:</h2><br>
+            <p id="player1token"></p>
+            <p id="player2token"></p>
+            <button type="button" class="btn btn-primary" onclick="Game.Data.skip()">Pass Turn</button>
+            <button type="button" class="btn btn-danger" onclick="Game.Data.Surrender()">Surrender Game</button>
+
+        </div>
+        <div class="col-12 col-lg-6 col-xxl-6">
+            <div id="boardarea"></div>
+        </div>
+        <div class="col-12 col-lg-6 col-xxl-6">
+            <div id="Chart"></div>
+
+        </div>
+        <div class="col-12 col-lg-6 col-xxl-6" id="meme"></div>
+    </div>
 </div>
+
 <div>
     <a asp-action="Index">Back to List</a>
 </div>
 
-<script src="~/js/app.js" asp-append-version="true"></script>
+<script src="~/js/app-raw.js"></script>
+<script src="~/js/vendor.js"></script>
+<script src="~/js/templates.js"></script>
+
+<script>
+
+    $(function () {
+        Game.init('@Model.GameToken', '@Model.PlayerToken');
+    });
+
+</script>

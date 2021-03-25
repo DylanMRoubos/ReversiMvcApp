@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -14,15 +16,36 @@ namespace ReversiMvcApp.Views
     public class PlayerController : Controller
     {
         private readonly ReversiDbContext _context;
+        private readonly ReversiDbContext _reversiDb;
+        private readonly UserManager<IdentityUser> _userManager;
 
-        public PlayerController(ReversiDbContext context)
+        public PlayerController(ReversiDbContext context, ReversiDbContext reversiDb, UserManager<IdentityUser> userManager)
         {
             _context = context;
+            _reversiDb = reversiDb;
+            _userManager = userManager;
         }
         
         // GET: Player
         public async Task<IActionResult> Index()
         {
+            //Check if player already has record
+            ClaimsPrincipal currentUser = this.User;
+
+            var claimcurrentUserID = currentUser.FindFirst(ClaimTypes.NameIdentifier);
+            var currentUserID = (claimcurrentUserID == null ? string.Empty : claimcurrentUserID.Value);
+
+            if (currentUserID != "")
+            {
+                if (!_reversiDb.Spelers.Any(s => s.Guid == currentUserID))
+                {
+                    _reversiDb.Spelers.Add(new Speler() { Guid = currentUserID, Naam = currentUser.Identity.Name });
+                    var currentIdentityUser = await _userManager.GetUserAsync(User);
+                    await _userManager.AddToRoleAsync(currentIdentityUser, "Player");
+                    _reversiDb.SaveChanges();
+                }
+            }
+
             return View(await _context.Spelers.ToListAsync());
         }
 

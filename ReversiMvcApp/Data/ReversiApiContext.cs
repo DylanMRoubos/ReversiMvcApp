@@ -40,6 +40,11 @@ namespace ReversiMvcApp.Data
             return _client.DeleteAsync(url).Result;
         }
 
+        public HttpResponseMessage PutRequest(string url, Object model)
+        {
+
+            return _client.PutAsJsonAsync(url, model).Result;
+        }
         public bool PlayerHasActiveGame()
         {
             //GET current user ID

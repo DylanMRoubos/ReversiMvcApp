@@ -66,7 +66,7 @@ namespace ReversiMvcApp
             {
                 endpoints.MapControllerRoute(
                     name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}");
+                    pattern: "{controller=Player}/{action=Index}/{id?}");
                 endpoints.MapRazorPages();
                 endpoints.MapHub<ReversiHub>("/chatHub");
             });

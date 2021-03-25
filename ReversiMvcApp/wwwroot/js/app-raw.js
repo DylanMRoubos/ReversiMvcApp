@@ -1,83 +1,56 @@
-const Game = (function (token) {
+const Game = (function () {
 
-    let _token = token;
+    let _token;
+    let _playerToken;
 
     const _getCurrentGameState = function () {
         // Game.Model.getGameState()
         console.log("refresh");
-        Game.Model.updateGame(_token);
+        Game.Model.updateGame(_token, _playerToken);
     }
 
-    const init = function () {
+    const init = function (token, playerToken) {
+        _token = token;
+        _playerToken = playerToken;
+        Game.Model.updateGame(_token, _playerToken);
         window.setInterval(function(){      
             _getCurrentGameState()            
         }, 2000);
-        afterInit();
     };
-    // Waarde/object geretourneerd aan de outer scope
     return {
         init: init,
     };
-})('d2dd4b51-c863-4dd7-9daa-060ebc38a569');
-$(function() {
-    let x = new FeedbackWidget("feedback-danger")
-    console.log( "ready!" );
-    $("#selector").on("click", function(){
-        x.show();
-        alert("The button was clicked.");
-    });
-}); 
+})();
+const FeedbackWidget = (() => {
 
-var logs = 0;
-class FeedbackWidget{
-    
-    constructor(elementId) {
-        this._elementId = elementId;
-    }
-    get elementId() { //getter, set keyword voor setter methode
-        return this._elementId;
-    }
-    
-    log(message){
-        localStorage.setItem(logs, JSON.stringify(message))
-        if(localStorage.length > 9){
-            localStorage.removeItem(localStorage.key(0))
-        }
-        logs++
-    }
-
-    removeLog(){
-        localStorage.clear();   
-    }
-
-    history(){
-        for(let i = 0; i < localStorage.length; i++){
-            let x = JSON.stringify(new Array(localStorage.getItem(i).message, localStorage.getItem(i).type))
-            console.log(x + '\n')
-        }
-    }
-
-    show(message){
-        $(".alert-text").text(message + "Hello friend")
-            $("#feedback-widget").removeClass("fade-out")
-            $("#feedback-widget").addClass("fade-in")
-    }
-
-    hide(){
-        var feedback = document.getElementById("feedback-widget")
+    const show = (message, withoutButtons) => {
+        $(".alert-text").text(message)
+        $("#feedback-widget").removeClass("fade-out")
+        $("#feedback-widget").addClass("fade-in")
         
+        if(withoutButtons) {
+            $(".FeedbackButton").css("display", "none");
+        } else {
+            $(".FeedbackButton").css("display", "inline");
+        }
+    } 
+
+    const hide = () => {  
         $("#feedback-widget").removeClass("fade-in")
         $("#feedback-widget").addClass("fade-out")
-    } 
-}
+    }
+
+    return {
+        hide: hide,
+        show: show,
+    }
+
+})();
 Game.Api = (() => {
-
-    console.log("joejoe vanuit api");
-
     const showMeme = () => {
         Game.Data.apicall("https://meme-api.herokuapp.com/gimme")
         .then(function (data) {
-            $("#test").html(
+            $("#meme").html(
                 Game.Template.parseTemplate("meme", {src: data["url"]})
             )
         })
@@ -105,26 +78,75 @@ Game.Data = (function () {
         })
     }
 
-    let placeDisc = function (cellId) {
-
-        $("#" + cellId).append(
-            "<div class=\"disc disc1\"></div>"
-        )
+    let apicallPut = (_url, putData) => {
+        return new Promise(function (resolve, reject) {
+            $.ajax({
+                url: _url,                
+                type: "PUT",
+                headers: {'Content-Type': 'application/json'},
+                data: JSON.stringify(putData),
+                success: function (data) {
+                    resolve(data);
+                },
+                error: function (data) {
+                    reject(data);
+                },
+            })
+        })
     }
 
+    let placeDisc = function (div) {
+
+        var x;
+        var y;
+        var count = 0;
+        $('#board').find('div').each(function(){    
+            if(div == this) {
+                var count1 = count / 2;
+
+                x = count1 % 8;
+                y = ~~(count1 / 8);
+            }
+            count++;
+        });
+
+        let data = {
+            x: x,
+            y: y,
+            playerToken: Game.Model.getPlayerToken(),
+            gameToken: Game.Model.getGame().token,
+            pass: false
+        }
+
+        apicallPut("https://localhost:5001/api/Spel/Zet", data).then((data) => {
+            Game.Api.showMeme();
+        });
+
+        console.log(apicallPut)
+    }
+
+    let skip = () => {
+        let data  = {
+            gameToken: Game.Model.getGame().token,
+            playerToken: Game.Model.getPlayerToken(),
+        }
+        apicallPut("https://localhost:5001/api/Spel/Skip", data)
+    }
+    
     let printboard = (board) => {
         let data = {
             board: JSON.parse(board)
         }
+        
         $("#boardarea").html(Game.Template.parseTemplate("board", data))
     }
 
     const printDetails = (game) => {
         $("#descriptions").html(game.description);
-        $("#player1token").html(game.playerToken1);
-        $("#player2token").html(game.playerToken2);
+        $("#player1token").html("Wit: " + game.playerToken1);
+        $("#player2token").html("Zwart: " + game.playerToken2);
 
-        if(game.currentPlayer == 2) {
+        if(game.currentPlayer == 1) {
             $("#player1token").css('font-weight', 'bold');
             $("#player2token").css('font-weight', 'normal');
         } else {
@@ -139,34 +161,50 @@ Game.Data = (function () {
         printDetails, printDetails,
         showFiche: placeDisc,
         apicall: apicall,
+        skip: skip,
+        // surrender: surrender,
     };
 })();
 Game.Model = (function () {
 
-    let game;
+    var game;
+    var currentPlayer;
+    var _playerToken;
 
-    // const _getGameState = function(token){
-    //     //aanvraag via Game.Data
-    //     let state = Game.Data.get("/api/Spel/Beurt/" + token);
-    //     //controle of ontvangen data valide is
-    //     switch(state){
-    //         case 0:
-    //             return "Geen specifieke waarde"
-    //         case 1:
-    //             return "Wit is aan zet"
-    //         case 2:
-    //             return "Zwart is aan zet"             
-    //     }
-    // };
+    const getGame = () => {
+        return game;
+    }
+    const getPlayerToken = () => {
+        return _playerToken;
+    }
 
-    const updateGame = (token) => {
+    const updateGame = (token, playerToken) => {
         _getGameData(token).then(function (data) {
             game = data;
+            _playerToken = playerToken;      
             Game.Data.printboard(game.board);
             Game.Data.printDetails(game);
+            Game.Stats.updateAmounts();            
+            _checkTurn(game);
         }).catch(function (error) {
             Game.Data.printboard(game.board);
         })
+    }
+
+    const _checkTurn = (game) => {
+        if (game.finished == true) {
+            FeedbackWidget.show("The game has ended and " + game.winner + " has won", true)
+            $("#board").css("opacity","0.5");
+            return;
+        }
+        if (game.currentPlayer == 1) {
+            currentPlayer = game.playerToken1;
+        } else {
+            currentPlayer = game.playerToken2;
+        }
+        if (currentPlayer != _playerToken) {
+            $("#board").css("opacity","0.5");
+        }
     }
 
     const _getGameData = (token) => {
@@ -180,48 +218,43 @@ Game.Model = (function () {
         })
     }
 
-    // Private function init
-    const privateInit = function () {
-        // console.log(configMap.apiUrl);
-    };
-
     // Waarde/object geretourneerd aan de outer scope
     return {
-        init: privateInit,
+        getGame: getGame,
+        getPlayerToken: getPlayerToken,
         updateGame: updateGame,
-        game: game,
-
-        // getGameState: _getGameState
     };
-})();
-Game.Reversi = (function() {
-    console.log('hallo, vanuit module Reversi')
 
-    //Configuratie en state waarden
-    // let configMap = {
-    //     apiUrl: url
-    // };
-    
-    // Private function init
-    const privateInit = function(){
-        // console.log(configMap.apiUrl);
-    };
-    
-    // Waarde/object geretourneerd aan de outer scope
-    return {
-    // init: privateInit
-    } ;   
 })();
 Game.Stats = (() => {
 
-    var _configMap;
+    const updateAmounts = () => {
+        var token = Game.Model.getGame().token;
+        console.log(token);
+        Game.Data.apicall('https://localhost:5001/api/spel/Amount/' + token ).then(function (data) {
 
-    const init = (configMap) => {
-        _configMap = configMap
+        var jsonData= JSON.parse(data);
+            playerPieceHistory = {
+                player1: [],
+                player2: []
+            };
+            for(let key in jsonData[0]) {
+                playerPieceHistory.player1.push(jsonData[0][key].Amount);               
+            }
+            for(let key in jsonData[1]) {
+                playerPieceHistory.player2.push(jsonData[1][key].Amount);               
+            }
+
+            $("#Chart").html(Game.Template.parseTemplate("stats", playerPieceHistory))
+        })
+    }
+
+    const init = () => {
     }
 
     return {
-        init: init
+        init: init,
+        updateAmounts: updateAmounts,
     }
 
 })();

@@ -46,13 +46,11 @@ namespace ReversiMvcApp.Controllers
         // GET: Game
         public async Task<IActionResult> Index()
         {
-            //if (Context.PlayerHasActiveGame())
-            //{
-            //    return RedirectToAction("Details", new { id = Context.GetPlayerCurrentGame() });
-            //}
-            
-            //var currentIdentityUser = await _usermanager.GetUserAsync(User);
-            //await _usermanager.AddToRoleAsync(currentIdentityUser, "SuperAdmin");
+            if (Context.PlayerHasActiveGame())
+            {
+                return RedirectToAction("Details", new { id = Context.GetPlayerCurrentGame() });
+            }
+
 
             _logger.LogInformation($"Game - Index page visited at { DateTime.UtcNow.ToLongTimeString()}");
             HttpResponseMessage response = Context.GetRequest("/api/spel");
@@ -75,10 +73,36 @@ namespace ReversiMvcApp.Controllers
             }
             HttpResponseMessage response = Context.GetRequest("/api/spel/" + id);
 
+            //TODO: make this if statement more convenient
             if (response.IsSuccessStatusCode)
             {
                 var responseGame = JsonConvert.DeserializeObject<Game>(response.Content.ReadAsStringAsync().Result);
-                return View(responseGame);
+                var user = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                if (responseGame.PlayerToken1 == user || responseGame.PlayerToken2 == user)
+                {
+                    var GameDetails = new GameDetails()
+                    {
+                        GameToken = responseGame.Token,
+                        PlayerToken = user
+                    };
+                    return View(GameDetails);
+                }                
+                if (responseGame.PlayerToken2 == "")
+                {
+                    //Add user to the game
+                    _context.PutRequest("api/spel", new JoinGameModel() { playerToken = user, gameToken = id });
+                    var GameDetails = new GameDetails()
+                    {
+                        GameToken = responseGame.Token,
+                        PlayerToken = user
+                    };
+                    return View(GameDetails);
+                }
+                else
+                {
+                    return RedirectToAction("Index");
+                }                
             }
 
             return View();
@@ -117,7 +141,7 @@ namespace ReversiMvcApp.Controllers
                     var apiGame = JsonConvert.DeserializeObject<Game>(gameRepsonse.Content.ReadAsStringAsync().Result);
 
                     _reversiDb.Game.AddAsync(new Game() { Token = apiGame.Token, Description = apiGame.Description, PlayerToken1 = apiGame.PlayerToken1 });
-                    _reversiDb.SaveChanges();
+                     _reversiDb.SaveChanges();
                     return RedirectToAction("Details", new { id = Context.GetPlayerCurrentGame() });
                 }
             }
