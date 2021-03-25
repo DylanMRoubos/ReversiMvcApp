@@ -81,9 +81,9 @@ Game.Data = (function () {
     let apicallPut = (_url, putData) => {
         return new Promise(function (resolve, reject) {
             $.ajax({
-                url: _url,                
+                url: _url,
                 type: "PUT",
-                headers: {'Content-Type': 'application/json'},
+                headers: { 'Content-Type': 'application/json' },
                 data: JSON.stringify(putData),
                 success: function (data) {
                     resolve(data);
@@ -100,8 +100,8 @@ Game.Data = (function () {
         var x;
         var y;
         var count = 0;
-        $('#board').find('div').each(function(){    
-            if(div == this) {
+        $('#board').find('div').each(function () {
+            if (div == this) {
                 var count1 = count / 2;
 
                 x = count1 % 8;
@@ -120,24 +120,26 @@ Game.Data = (function () {
 
         apicallPut("https://localhost:5001/api/Spel/Zet", data).then((data) => {
             Game.Api.showMeme();
+        }).catch(function (error) {
+            console.log("Erro in getting the data")
         });
 
         console.log(apicallPut)
     }
 
     let skip = () => {
-        let data  = {
+        let data = {
             gameToken: Game.Model.getGame().token,
             playerToken: Game.Model.getPlayerToken(),
         }
         apicallPut("https://localhost:5001/api/Spel/Skip", data)
     }
-    
+
     let printboard = (board) => {
         let data = {
             board: JSON.parse(board)
         }
-        
+
         $("#boardarea").html(Game.Template.parseTemplate("board", data))
     }
 
@@ -146,14 +148,14 @@ Game.Data = (function () {
         $("#player1token").html("Wit: " + game.playerToken1);
         $("#player2token").html("Zwart: " + game.playerToken2);
 
-        if(game.currentPlayer == 1) {
+        if (game.currentPlayer == 1) {
             $("#player1token").css('font-weight', 'bold');
             $("#player2token").css('font-weight', 'normal');
         } else {
             $("#player2token").css('font-weight', 'bold');
             $("#player1token").css('font-weight', 'normal');
         }
-    }    
+    }
 
 
     return {
@@ -187,7 +189,7 @@ Game.Model = (function () {
             Game.Stats.updateAmounts();            
             _checkTurn(game);
         }).catch(function (error) {
-            Game.Data.printboard(game.board);
+            console.log("Error in getting the data")
         })
     }
 
@@ -214,6 +216,8 @@ Game.Model = (function () {
                     resolve(data);
                 }
                 reject();
+            }).catch(function (error) {
+                console.log("Error in getting the data")
             })
         })
     }
