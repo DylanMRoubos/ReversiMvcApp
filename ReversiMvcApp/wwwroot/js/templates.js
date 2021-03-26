@@ -8,7 +8,7 @@ Handlebars.registerPartial("cell", Handlebars.template({"compiler":[8,">= 4.3.0"
 
   return "<div class=\"cell\" onclick=\"Game.Data.showFiche(this.id)\" id=\"cell"
     + container.escapeExpression(((helper = (helper = lookupProperty(helpers,"id") || (depth0 != null ? lookupProperty(depth0,"id") : depth0)) != null ? helper : container.hooks.helperMissing),(typeof helper === "function" ? helper.call(depth0 != null ? depth0 : (container.nullContext || {}),{"name":"id","hash":{},"data":data,"loc":{"start":{"line":1,"column":65},"end":{"line":1,"column":71}}}) : helper)))
-    + "\"></div>\n\n\n";
+    + "\"></div>";
 },"useData":true}));
 Handlebars.registerPartial("fiche", Handlebars.template({"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
     return "<div class=\"disc disc-"
@@ -57,9 +57,9 @@ this["spa_templates"]["templates"]["body"] = Handlebars.template({"compiler":[8,
         return undefined
     };
 
-  return "<section class=\"body\">\n "
-    + container.escapeExpression(((helper = (helper = lookupProperty(helpers,"bericht") || (depth0 != null ? lookupProperty(depth0,"bericht") : depth0)) != null ? helper : container.hooks.helperMissing),(typeof helper === "function" ? helper.call(depth0 != null ? depth0 : (container.nullContext || {}),{"name":"bericht","hash":{},"data":data,"loc":{"start":{"line":2,"column":1},"end":{"line":2,"column":12}}}) : helper)))
-    + "\n </section>";
+  return "<section class=\"body\">\n    "
+    + container.escapeExpression(((helper = (helper = lookupProperty(helpers,"bericht") || (depth0 != null ? lookupProperty(depth0,"bericht") : depth0)) != null ? helper : container.hooks.helperMissing),(typeof helper === "function" ? helper.call(depth0 != null ? depth0 : (container.nullContext || {}),{"name":"bericht","hash":{},"data":data,"loc":{"start":{"line":2,"column":4},"end":{"line":2,"column":15}}}) : helper)))
+    + "\n</section>";
 },"useData":true});
 this["spa_templates"]["templates"]["meme"] = Handlebars.template({"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
     var helper, lookupProperty = container.lookupProperty || function(parent, propertyName) {
@@ -81,7 +81,7 @@ this["spa_templates"]["templates"]["stats"] = Handlebars.template({"compiler":[8
         return undefined
     };
 
-  return "<canvas id=\"PlayerPointsChart\" ></canvas>\n<script>\n    var ctx = document.getElementById('PlayerPointsChart').getContext('2d');\n    var player1PieceHistory = ["
+  return "<canvas id=\"PlayerPointsChart\"></canvas>\n<script>\n    var ctx = document.getElementById('PlayerPointsChart').getContext('2d');\n    var player1PieceHistory = ["
     + alias4(((helper = (helper = lookupProperty(helpers,"player1") || (depth0 != null ? lookupProperty(depth0,"player1") : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"player1","hash":{},"data":data,"loc":{"start":{"line":4,"column":31},"end":{"line":4,"column":44}}}) : helper)))
     + "];\n    var player2PieceHistory = ["
     + alias4(((helper = (helper = lookupProperty(helpers,"player2") || (depth0 != null ? lookupProperty(depth0,"player2") : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"player2","hash":{},"data":data,"loc":{"start":{"line":5,"column":31},"end":{"line":5,"column":44}}}) : helper)))

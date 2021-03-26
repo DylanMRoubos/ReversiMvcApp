@@ -19,7 +19,7 @@ using ReversiMvcApp.Models;
 
 namespace ReversiMvcApp.Controllers
 {
-   
+    [Authorize(Roles = "Admin, Mediator, Player")]
     public class GameController : Controller
     {
         private readonly ReversiDbContext _reversiDb;
@@ -140,8 +140,8 @@ namespace ReversiMvcApp.Controllers
                 {
                     var apiGame = JsonConvert.DeserializeObject<Game>(gameRepsonse.Content.ReadAsStringAsync().Result);
 
-                    _reversiDb.Game.AddAsync(new Game() { Token = apiGame.Token, Description = apiGame.Description, PlayerToken1 = apiGame.PlayerToken1 });
-                     _reversiDb.SaveChanges();
+                    //_reversiDb.Game.AddAsync(new Game() { Token = apiGame.Token, Description = apiGame.Description, PlayerToken1 = apiGame.PlayerToken1 });
+                    // _reversiDb.SaveChanges();
                     return RedirectToAction("Details", new { id = Context.GetPlayerCurrentGame() });
                 }
             }

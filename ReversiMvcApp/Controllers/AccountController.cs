@@ -121,7 +121,7 @@ namespace ReversiMvcApp.Controllers
             try
             {
                 var game = await _context.Game.FirstOrDefaultAsync(G => G.PlayerToken1 == id || G.PlayerToken2 == id);
-                _context.Game.Remove(game);
+                //_context.Game.Remove(game);
                 var response = apiContext.DeleteRequest("/api/spel/" + game.Token);
             }
             catch (Exception e) { }
