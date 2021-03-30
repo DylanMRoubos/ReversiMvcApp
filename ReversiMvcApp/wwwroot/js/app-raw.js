@@ -5,33 +5,29 @@
 */
 const Game = (function () {
 
-    //Var for determeting the refresh rate in miliseconds
-    var gameRefreshRate;
-
     //Method that will be called every x miliseconds to refresh the game
     const _getCurrentGameState = function () {
         Game.Model.updateGame();
     }
 
     //Method to init the game by setting default settings in the model + adding te method interval
-    const init = function (token, playerToken, refreshRate) {
-        gameRefreshRate = refreshRate;
+    const init = function (token, playerToken) {
+        // gameRefreshRate = refreshRate;
         Game.Model.setGameToken(token);
         Game.Model.setPlayerToken(playerToken);
 
         window.setInterval(function(){      
             _getCurrentGameState()            
-        }, gameRefreshRate);
+        }, 2000);
     };
     return {
         init: init,
     };
 })();
-/**
-* Function for showing a feedbackwidget, including multiple 
-* options to customise onclick event and which buttons are shown
-* @author Dylan Roubos
-*/
+//Function for showing a feedbackwidget, including multiple 
+//options to customise onclick event and which buttons are shown
+//@author Dylan Roubos
+//
 const FeedbackWidget = (() => {
     //Buttons enabled:
     // 0 = close only
@@ -74,9 +70,19 @@ const FeedbackWidget = (() => {
     }
 
 })();
-//TODO: add the api calls in here
 Game.Api = (() => {
-    
+    const showMeme = () => {
+        Game.Data.apicall("https://meme-api.herokuapp.com/gimme")
+        .then(function (data) {
+            $("#meme").html(
+                Game.Template.parseTemplate("meme", {src: data["url"]})
+            )
+        })
+    }
+
+    return {
+        showMeme: showMeme,
+    }
 })();
 //TODO: remove the function that do not need to be in this module ()
 Game.Data = (function () {
@@ -232,7 +238,6 @@ Game.Meme = (() => {
         showMeme, showMeme
     }
 })();
-
 //TODO: remove the function that do not need to be in this module ()
 Game.Model = (function () {
 
@@ -246,6 +251,9 @@ Game.Model = (function () {
     }
     const getPlayerToken = () => {
         return playerToken;
+    }
+    const getGameToken = () => {
+        return gameToken;
     }
     const setGameToken = (_gameToken) => {
         gameToken = _gameToken;
@@ -304,6 +312,7 @@ Game.Model = (function () {
         getGame: getGame,
         getPlayerToken: getPlayerToken,
         setGameToken: setGameToken,
+        getGameToken: getGameToken,
         setPlayerToken: setPlayerToken,
         updateGame: updateGame,
     };
